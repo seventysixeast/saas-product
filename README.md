@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js 14 + Supabase + Stripe SaaS Prototype
 
-## Getting Started
+A production-ready SaaS starter featuring modern UI, robust authentication, and full-cycle Stripe subscription billing.
 
-First, run the development server:
+## Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS v4 & shadcn/ui
+- **Auth & Database**: Supabase (via SSR cookies)
+- **Billing**: Stripe (Checkout mode: subscription + Webhooks)
 
+## Prerequisites
+- Node.js 18+
+- [Supabase CLI](https://supabase.com/docs/guides/cli) or a hosted Supabase project.
+- [Stripe CLI](https://stripe.com/docs/stripe-cli)
+- A Stripe account (in test mode).
+
+## Setup Instructions
+
+### 1. Project Initialization
+Clone the repository and install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Environment Variables
+Copy `.env.local.example` to `.env.local`:
+```bash
+cp .env.local.example .env.local
+```
+Fill in the variable values using the steps below.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Supabase Configuration
+If using a hosted remote project:
+1. Copy the **URL** and **anon key** to `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2. Copy the **service_role key** to `SUPABASE_SERVICE_ROLE_KEY`.
+3. In the Supabase Dashboard, navigate to **SQL Editor** and run the contents of [`supabase/migrations/001_subscriptions.sql`](./supabase/migrations/001_subscriptions.sql) to create the table and RLS policies.
+4. **Important**: Go to **Authentication -> Email Templates** and *disable* "Confirm Email" for a smoother local onboarding experience (or verify your sign-up emails if left on).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Stripe Configuration
+1. In the Stripe Dashboard (Test Mode), create a new **Product** and **Pricing** plan (Recurring).
+2. Grab the Pricing ID (looks like `price_1Nxyz...`) and place it in `.env.local` under `STRIPE_PRICE_ID`.
+3. Grab your Secret Key (`sk_test_...`) and Publishable Key (`pk_test_...`) and update `.env.local`.
 
-## Learn More
+### 5. Webhooks Setup
+To process local subscription events, set up Stripe CLI to forward webhooks to your local server:
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+In the terminal output, Stripe CLI will reveal a webhook signing secret (looks like `whsec_...`). Copy this into `STRIPE_WEBHOOK_SECRET` in `.env.local`.
 
-To learn more about Next.js, take a look at the following resources:
+### 6. Run the App
+Start your development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Navigate to `http://localhost:3000`. You will be redirected to the login/signup page.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Prototype Testing Flow
+1. Create a new account at `/signup`.
+2. Check your beautiful Dashboard. It should indicate an "Inactive" subscription status.
+3. Click **Subscribe**. You will be redirected to the Stripe Checkout page.
+4. Use a Stripe test card (e.g., `4242 4242 4242 4242`) and dummy details to checkout.
+5. After payment, you are redirected back to the Dashboard.
+6. Check your terminal running `stripe listen` — it should register the `checkout.session.completed` event.
+7. The Dashboard should now display your status as **Active** with your subscription ID.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture Highlights
+- Uses **Supabase SSR** with route-protection middleware for true server-rendered authentication guards.
+- Fully compatible with **Tailwind CSS v4**'s new syntax and theme variables structure.
+- Designed with premium glass-morphism aesthetic cards, dark layout variants, and animated transitions leveraging **shadcn/ui**.
+- Stripe Webhook handler validates signatures robustly and is fully compliant with the latest **Stripe Node SDK version 22+**.
