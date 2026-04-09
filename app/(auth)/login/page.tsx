@@ -97,11 +97,11 @@ export default function LoginPage() {
       </CardContent>
 
       <CardFooter className="pt-0">
-        <p className="text-center text-sm text-slate-400 w-full">
+        <p className="text-center text-sm text-white w-full">
           Don&apos;t have an account?{' '}
           <Link
             href="/signup"
-            className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+            className="font-medium text-slate-900/80 hover:text-violet-300 transition-colors"
           >
             Sign up
           </Link>
