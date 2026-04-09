@@ -9,7 +9,7 @@ A production-ready SaaS starter featuring modern UI, robust authentication, and 
 - **Billing**: Stripe (Checkout mode: subscription + Webhooks)
 
 ## Prerequisites
-- Node.js 18+
+- Node.js 18+ (Node 24 recommended)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) or a hosted Supabase project.
 - [Stripe CLI](https://stripe.com/docs/stripe-cli)
 - A Stripe account (in test mode).
