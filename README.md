@@ -23,10 +23,16 @@ npm install
 ```
 
 ### 2. Environment Variables
-Copy `.env.local.example` to `.env.local`:
+Copy `.env.local.example` to `.env.local` (recommended for Next.js local dev):
 ```bash
 cp .env.local.example .env.local
 ```
+
+If you prefer, you can also use `.env` instead:
+```bash
+cp .env.local.example .env
+```
+
 Fill in the variable values using the steps below.
 
 ### 3. Supabase Configuration
@@ -41,12 +47,19 @@ If using a hosted remote project:
 2. Grab the Pricing ID (looks like `price_1Nxyz...`) and place it in `.env.local` under `STRIPE_PRICE_ID`.
 3. Grab your Secret Key (`sk_test_...`) and Publishable Key (`pk_test_...`) and update `.env.local`.
 
-### 5. Webhooks Setup
-To process local subscription events, set up Stripe CLI to forward webhooks to your local server:
+### 5. Webhooks Setup (Stripe CLI Listen)
+1. Start your Next.js app in one terminal:
 ```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
+npm run dev
 ```
-In the terminal output, Stripe CLI will reveal a webhook signing secret (looks like `whsec_...`). Copy this into `STRIPE_WEBHOOK_SECRET` in `.env.local`.
+2. Start webhook forwarding in a second terminal:
+```bash
+npm run stripe:listen
+```
+3. Copy the webhook signing secret (`whsec_...`) shown by Stripe CLI into `STRIPE_CLI_WEBHOOK_SECRET` (or `STRIPE_WEBHOOK_SECRET`) in your env file.
+4. Restart the Next.js server after changing env values.
+
+Note: restarting `stripe listen` can generate a new webhook secret. If webhook verification starts failing, update the secret and restart `npm run dev`.
 
 ### 6. Run the App
 Start your development server:
@@ -58,12 +71,17 @@ Navigate to `http://localhost:3000`. You will be redirected to the login/signup 
 
 ## Prototype Testing Flow
 1. Create a new account at `/signup`.
-2. Check your beautiful Dashboard. It should indicate an "Inactive" subscription status.
+2. Check your Dashboard. It should indicate an "Inactive" subscription status.
 3. Click **Subscribe**. You will be redirected to the Stripe Checkout page.
 4. Use a Stripe test card (e.g., `4242 4242 4242 4242`) and dummy details to checkout.
 5. After payment, you are redirected back to the Dashboard.
-6. Check your terminal running `stripe listen` — it should register the `checkout.session.completed` event.
+6. Check your terminal running `stripe listen` — it should register events like `checkout.session.completed`.
 7. The Dashboard should now display your status as **Active** with your subscription ID.
+
+Optional quick webhook test (without checkout UI):
+```bash
+stripe trigger checkout.session.completed
+```
 
 ## Architecture Highlights
 - Uses **Supabase SSR** with route-protection middleware for true server-rendered authentication guards.

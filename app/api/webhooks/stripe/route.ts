@@ -6,13 +6,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
   apiVersion: '2026-03-25.dahlia' as const,
 })
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const webhookSecret = process.env.STRIPE_CLI_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET
 
 // Must be force-dynamic and use raw body for signature verification
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    if (!webhookSecret) {
+      console.error('[Webhook] Missing STRIPE_CLI_WEBHOOK_SECRET or STRIPE_WEBHOOK_SECRET')
+      return NextResponse.json(
+        { error: 'Webhook secret is not configured' },
+        { status: 500 }
+      )
+    }
+
     // Read raw body as text for Stripe signature verification
     const body = await request.text()
     const signature = request.headers.get('stripe-signature')
